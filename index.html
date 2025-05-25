@@ -1,0 +1,1011 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RHYTHM MACHINE</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
+    <style>
+        body {
+            font-family: 'Courier New', monospace;
+            background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
+            margin: 0;
+            padding: 20px;
+            min-height: 100vh;
+            color: #00ff00;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: rgba(0, 0, 0, 0.8);
+            border: 2px solid #333;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 0 20px rgba(0, 255, 0, 0.1);
+        }
+        
+        h1 {
+            text-align: center;
+            margin-bottom: 20px;
+            font-size: 2em;
+            color: #ff6600;
+            text-shadow: 0 0 10px rgba(255, 102, 0, 0.5);
+        }
+        
+        .main-controls {
+            display: flex;
+            justify-content: space-between;
+            gap: 15px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            align-items: flex-start;
+        }
+        
+        .left-controls {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        
+        .right-controls {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            align-items: flex-end;
+        }
+        
+        .pattern-selector {
+            display: flex;
+            gap: 5px;
+            background: rgba(255, 255, 255, 0.05);
+            padding: 10px;
+            border-radius: 10px;
+            border: 1px solid #333;
+        }
+        
+        .pattern-sequence-control {
+            display: flex;
+            gap: 10px;
+            background: rgba(0, 255, 255, 0.05);
+            padding: 10px;
+            border-radius: 10px;
+            border: 1px solid #066;
+            margin-bottom: 10px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+        
+        .sequence-start-selector,
+        .sequence-end-selector {
+            display: flex;
+            gap: 3px;
+            align-items: center;
+        }
+        
+        .pattern-btn {
+            background: #333;
+            border: 1px solid #555;
+            color: #00ff00;
+            padding: 8px 12px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-family: 'Courier New', monospace;
+            font-weight: bold;
+            transition: all 0.3s ease;
+        }
+        
+        .pattern-btn:hover {
+            background: #444;
+            border-color: #777;
+        }
+        
+        .pattern-btn.active {
+            background: #ff6600;
+            color: black;
+            border-color: #ff8833;
+            box-shadow: 0 0 10px rgba(255, 102, 0, 0.5);
+        }
+        
+        .sequence-btn {
+            background: #223;
+            border: 1px solid #446;
+            color: #00ffff;
+            padding: 8px 12px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-family: 'Courier New', monospace;
+            font-weight: bold;
+            transition: all 0.3s ease;
+        }
+        
+        .sequence-btn:hover {
+            background: #334;
+            border-color: #668;
+        }
+        
+        .sequence-btn.active {
+            background: #00ffff;
+            color: black;
+            border-color: #33ffff;
+            box-shadow: 0 0 10px rgba(0, 255, 255, 0.5);
+        }
+        
+        button {
+            background: #333;
+            border: 1px solid #555;
+            color: #00ff00;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-family: 'Courier New', monospace;
+            font-weight: bold;
+            transition: all 0.3s ease;
+        }
+        
+        button:hover {
+            background: #444;
+            border-color: #777;
+        }
+        
+        button:active {
+            background: #222;
+        }
+        
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        .transport-btn {
+            background: #ff6600 !important;
+            color: black !important;
+            border-color: #ff8833 !important;
+        }
+        
+        .transport-btn:hover {
+            background: #ff8833 !important;
+        }
+        
+        .bpm-control {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: rgba(255, 255, 255, 0.05);
+            padding: 10px 15px;
+            border-radius: 10px;
+            border: 1px solid #333;
+        }
+        
+        .bpm-control input {
+            background: #222;
+            border: 1px solid #555;
+            color: #00ff00;
+            width: 60px;
+            text-align: center;
+            font-family: 'Courier New', monospace;
+            padding: 5px;
+            border-radius: 3px;
+        }
+        
+        .tracks {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+        
+        .track {
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid #333;
+            border-radius: 5px;
+            padding: 10px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        .track-name {
+            font-size: 0.9em;
+            font-weight: bold;
+            width: 140px;
+            color: #ff6600;
+            flex-shrink: 0;
+            order: 1;
+        }
+        
+        .step-grid {
+            display: grid;
+            grid-template-columns: repeat(16, 1fr);
+            gap: 2px;
+            flex: 1;
+            order: 3;
+            position: relative;
+        }
+        
+        /* 4拍目と5拍目の間の区切り線 */
+        .step-grid .step:nth-child(4)::after {
+            content: '';
+            position: absolute;
+            right: -8px;
+            top: -8px;
+            bottom: -8px;
+            width: 2px;
+            background: #ff6600;
+            pointer-events: none;
+            z-index: 1;
+        }
+        
+        /* 8拍目と9拍目の間の区切り線 */
+        .step-grid .step:nth-child(8)::after {
+            content: '';
+            position: absolute;
+            right: -8px;
+            top: -8px;
+            bottom: -8px;
+            width: 2px;
+            background: #ff6600;
+            pointer-events: none;
+            z-index: 1;
+        }
+        
+        /* 12拍目と13拍目の間の区切り線 */
+        .step-grid .step:nth-child(12)::after {
+            content: '';
+            position: absolute;
+            right: -8px;
+            top: -8px;
+            bottom: -8px;
+            width: 2px;
+            background: #ff6600;
+            pointer-events: none;
+            z-index: 1;
+        }
+        
+        .track-controls {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            flex-shrink: 0;
+            order: 2;
+        }
+        
+        .track-btn {
+            background: #222;
+            border: 1px solid #444;
+            color: #00ff00;
+            padding: 4px 8px;
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 0.8em;
+            font-family: 'Courier New', monospace;
+        }
+        
+        .track-btn:hover {
+            background: #333;
+        }
+        
+        .volume-control {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        .volume-control input {
+            width: 60px;
+            height: 20px;
+        }
+        
+        .volume-display {
+            font-size: 0.8em;
+            width: 25px;
+            text-align: right;
+        }
+        
+        .step {
+            aspect-ratio: 1;
+            border: 1px solid #444;
+            border-radius: 3px;
+            background: #1a1a1a;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.7em;
+            font-weight: bold;
+            min-height: 50px;
+            height: 50px;
+            position: relative;
+            z-index: 2;
+        }
+        
+        .step:hover {
+            background: #333;
+            border-color: #666;
+        }
+        
+        .step.active {
+            background: #ff6600;
+            color: black;
+            border-color: #ff8833;
+            box-shadow: 0 0 5px rgba(255, 102, 0, 0.5);
+        }
+        
+        .step.current {
+            border-color: #00ff00;
+            box-shadow: 0 0 8px rgba(0, 255, 0, 0.8);
+            animation: pulse 0.1s ease-in-out;
+        }
+        
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 40px;
+            font-style: italic;
+            color: #ff6600;
+        }
+        
+        .pattern-info {
+            color: #ff6600;
+            font-size: 0.9em;
+            text-align: right;
+        }
+        
+        .sequence-info {
+            color: #00ffff;
+            font-size: 0.9em;
+            text-align: right;
+        }
+        
+        @media (max-width: 768px) {
+            .main-controls {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            
+            .left-controls {
+                justify-content: center;
+            }
+            
+            .right-controls {
+                align-items: center;
+            }
+            
+            .right-controls > div {
+                flex-direction: column !important;
+                gap: 10px !important;
+            }
+            
+            .pattern-sequence-control {
+                flex-direction: column;
+                gap: 8px;
+                align-items: center;
+            }
+            
+            .sequence-start-selector,
+            .sequence-end-selector {
+                flex-wrap: wrap;
+                justify-content: center;
+            }
+            
+            .track {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 8px;
+            }
+            
+            .track-name {
+                width: auto;
+                font-size: 0.8em;
+                text-align: center;
+                order: 1;
+            }
+            
+            .track-controls {
+                justify-content: center;
+                order: 2;
+            }
+            
+            .step-grid {
+                order: 3;
+            }
+            
+            .step {
+                min-height: 15px;
+                height: 15px;
+                font-size: 0.6em;
+            }
+            
+            .volume-control input {
+                width: 40px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>RHYTHM MACHINE</h1>
+        
+        <div class="main-controls">
+            <div class="left-controls">
+                <button id="playBtn" class="transport-btn">▶️ PLAY</button>
+                <button id="stopBtn" class="transport-btn">⏹️ STOP</button>
+                <button id="clearBtn">CLEAR</button>
+                <button id="randomBtn">RANDOM</button>
+                
+                <div class="bpm-control">
+                    <span>BPM:</span>
+                    <input type="number" id="bpmInput" value="120" min="60" max="200">
+                </div>
+            </div>
+            
+            <div class="right-controls">
+                <div style="display: flex; gap: 15px; align-items: flex-start; flex-wrap: wrap;">
+                    <div class="pattern-sequence-control">
+                        <span style="margin-right: 10px; color: #00ffff;">SEQUENCE:</span>
+                        <div class="sequence-start-selector">
+                            <span style="margin-right: 5px; color: #00ffff; font-size: 0.9em;">FROM:</span>
+                            <div class="sequence-btn sequence-start active" data-pattern="A">A</div>
+                            <div class="sequence-btn sequence-start" data-pattern="B">B</div>
+                            <div class="sequence-btn sequence-start" data-pattern="C">C</div>
+                            <div class="sequence-btn sequence-start" data-pattern="D">D</div>
+                            <div class="sequence-btn sequence-start" data-pattern="E">E</div>
+                            <div class="sequence-btn sequence-start" data-pattern="F">F</div>
+                            <div class="sequence-btn sequence-start" data-pattern="G">G</div>
+                            <div class="sequence-btn sequence-start" data-pattern="H">H</div>
+                        </div>
+                        <span style="margin: 0 5px; color: #00ffff; font-size: 0.9em;">~</span>
+                        <div class="sequence-end-selector">
+                            <span style="margin-right: 5px; color: #00ffff; font-size: 0.9em;">TO:</span>
+                            <div class="sequence-btn sequence-end active" data-pattern="A">A</div>
+                            <div class="sequence-btn sequence-end" data-pattern="B">B</div>
+                            <div class="sequence-btn sequence-end" data-pattern="C">C</div>
+                            <div class="sequence-btn sequence-end" data-pattern="D">D</div>
+                            <div class="sequence-btn sequence-end" data-pattern="E">E</div>
+                            <div class="sequence-btn sequence-end" data-pattern="F">F</div>
+                            <div class="sequence-btn sequence-end" data-pattern="G">G</div>
+                            <div class="sequence-btn sequence-end" data-pattern="H">H</div>
+                        </div>
+                    </div>
+                    
+                    <div class="pattern-selector">
+                        <span style="margin-right: 10px;">EDIT:</span>
+                        <div class="pattern-btn active" data-pattern="A">A</div>
+                        <div class="pattern-btn" data-pattern="B">B</div>
+                        <div class="pattern-btn" data-pattern="C">C</div>
+                        <div class="pattern-btn" data-pattern="D">D</div>
+                        <div class="pattern-btn" data-pattern="E">E</div>
+                        <div class="pattern-btn" data-pattern="F">F</div>
+                        <div class="pattern-btn" data-pattern="G">G</div>
+                        <div class="pattern-btn" data-pattern="H">H</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div id="loading" class="loading">Initializing TR-909/808 Engine...</div>
+        
+        <div id="main-content" style="display: none;">
+            <div class="tracks" id="tracks">
+                <!-- トラックはJavaScriptで動的生成 -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        class TR909RhythmMachine {
+            constructor() {
+                this.isPlaying = false;
+                this.currentStep = 0;
+                this.currentPattern = 'A';
+                this.playingPattern = 'A';
+                this.sequenceStart = 'A';
+                this.sequenceEnd = 'A';
+                this.currentPatternInSequence = 0;
+                this.patternsInSequence = ['A'];
+                this.bpm = 120;
+                this.tracks = [];
+                this.samples = {};
+                this.sequence = null;
+                this.patternStepCount = 0;
+                
+                // TR-909/808トラック定義
+                this.trackDefinitions = [
+                    { name: 'Bass Drum', short: 'BD', type: 'kick' },
+                    { name: 'Snare Drum', short: 'SD', type: 'snare' },
+                    { name: 'Low Tom', short: 'LT', type: 'tom_low' },
+                    { name: 'Mid Tom', short: 'MT', type: 'tom_mid' },
+                    { name: 'Hi Tom', short: 'HT', type: 'tom_hi' },
+                    { name: 'Rim Shot', short: 'RS', type: 'rimshot' },
+                    { name: 'Hand Clap', short: 'HC', type: 'clap' },
+                    { name: 'Cowbell', short: 'CB', type: 'cowbell' },
+                    { name: 'Open Hi-Hat', short: 'OH', type: 'hihat_open' },
+                    { name: 'Closed Hi-Hat', short: 'CH', type: 'hihat_closed' },
+                    { name: 'Ride Cymbal', short: 'RC', type: 'ride' },
+                    { name: 'Crash Cymbal', short: 'CC', type: 'crash' }
+                ];
+                
+                // パターンデータ（8パターン × 12トラック × 16ステップ）
+                this.patterns = {};
+                ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'].forEach(pattern => {
+                    this.patterns[pattern] = this.trackDefinitions.map(() => new Array(16).fill(false));
+                });
+                
+                this.init();
+            }
+            
+            async init() {
+                try {
+                    await this.setupAudio();
+                    this.createTracks();
+                    this.setupEventListeners();
+                    this.loadPattern(this.currentPattern);
+                    this.updateSequence();
+                    this.hideLoading();
+                } catch (error) {
+                    console.error('初期化エラー:', error);
+                    this.hideLoading();
+                }
+            }
+            
+            async setupAudio() {
+                this.createSamples();
+                
+                this.sequence = new Tone.Sequence((time, step) => {
+                    this.playStep(step);
+                    Tone.Draw.schedule(() => {
+                        this.updateUI(step);
+                    }, time);
+                }, [...Array(16).keys()], "16n");
+                
+                Tone.Transport.bpm.value = this.bpm;
+            }
+            
+            createSamples() {
+                // ローカルサンプルファイルを読み込み
+                console.log('🎵 Loading local TR-909/808 samples...');
+                this.loadLocalSamples();
+            }
+            
+            loadLocalSamples() {
+                // ローカルのサンプルファイルパス
+                const sampleFiles = {
+                    kick: './samples/kick.wav',
+                    snare: './samples/snare.wav',
+                    tom_low: './samples/tom_low.wav',
+                    tom_mid: './samples/tom_mid.wav',
+                    tom_hi: './samples/tom_hi.wav',
+                    rimshot: './samples/rimshot.wav',
+                    clap: './samples/clap.wav',
+                    cowbell: './samples/cowbell.wav',
+                    hihat_open: './samples/hihat_open.wav',
+                    hihat_closed: './samples/hihat_closed.wav',
+                    ride: './samples/ride.wav',
+                    crash: './samples/crash.wav'
+                };
+                
+                let loadedCount = 0;
+                const totalCount = Object.keys(sampleFiles).length;
+                
+                // HTTPサーバーで実行されているかチェック
+                const isHTTPServer = window.location.protocol === 'http:' || window.location.protocol === 'https:';
+                
+                if (!isHTTPServer) {
+                    console.warn('⚠️ ローカルファイルアクセスには HTTPサーバーが必要です');
+                    console.warn('📋 解決方法:');
+                    console.warn('   1. コマンドプロンプトで: python -m http.server 8000');
+                    console.warn('   2. ブラウザで: http://localhost:8000 にアクセス');
+                    console.warn('   3. または VS Code Live Server を使用');
+                    console.warn('🔧 現在は改良シンセサイザーで動作します');
+                    
+                    // 全てフォールバックシンセで作成
+                    Object.keys(sampleFiles).forEach(type => {
+                        this.createEnhancedSynth(type);
+                    });
+                    return;
+                }
+                
+                // 各サンプルを読み込み
+                Object.entries(sampleFiles).forEach(([type, url]) => {
+                    console.log(`🔍 Loading ${type}: ${url}`);
+                    
+                    this.samples[type] = new Tone.Player({
+                        url: url,
+                        onload: () => {
+                            loadedCount++;
+                            console.log(`✅ ${type.toUpperCase()} loaded! (${loadedCount}/${totalCount})`);
+                            
+                            if (loadedCount === totalCount) {
+                                console.log('🎉 All local TR-909/808 samples loaded successfully!');
+                                console.log('🥁 Ready to rock with authentic drum machine sounds!');
+                            }
+                        },
+                        onerror: (error) => {
+                            console.error(`❌ Failed to load ${type} from ${url}:`, error);
+                            console.log(`🔧 Creating enhanced synth for ${type}`);
+                            this.createEnhancedSynth(type);
+                        }
+                    }).toDestination();
+                });
+                
+                // タイムアウト処理
+                setTimeout(() => {
+                    if (loadedCount < totalCount) {
+                        console.log(`⚠️ ${totalCount - loadedCount} samples missing. Using enhanced synths for fallback.`);
+                    }
+                }, 5000);
+            }
+            
+            createEnhancedSynth(type) {
+                // 改良されたTR-909/808風シンセサイザー（個別作成用）
+                const synthConfigs = {
+                    kick: () => new Tone.MembraneSynth({
+                        pitchDecay: 0.08,
+                        octaves: 12,
+                        oscillator: { type: "sine", partials: [1, 0.5, 0.3, 0.1] },
+                        envelope: { attack: 0.001, decay: 0.6, sustain: 0.0, release: 0.8 }
+                    }).chain(new Tone.Filter(80, "lowpass"), new Tone.Compressor(-30, 10), Tone.Destination),
+                    
+                    snare: () => new Tone.NoiseSynth({
+                        noise: { type: "white" },
+                        envelope: { attack: 0.001, decay: 0.2, sustain: 0.0, release: 0.3 },
+                        filter: { frequency: 2000, type: "bandpass", Q: 2 }
+                    }).chain(new Tone.Distortion(0.4), Tone.Destination),
+                    
+                    clap: () => new Tone.NoiseSynth({
+                        noise: { type: "white" },
+                        envelope: { attack: 0.01, decay: 0.15, sustain: 0.0, release: 0.05 },
+                        filter: { frequency: 2500, type: "bandpass", Q: 2 }
+                    }).chain(new Tone.Reverb(0.3), Tone.Destination),
+                    
+                    hihat_closed: () => new Tone.NoiseSynth({
+                        noise: { type: "white" },
+                        envelope: { attack: 0.001, decay: 0.04, sustain: 0.0, release: 0.02 },
+                        filter: { frequency: 12000, type: "highpass", Q: 1.5 }
+                    }).chain(new Tone.Gain(0.6), Tone.Destination),
+                    
+                    hihat_open: () => new Tone.NoiseSynth({
+                        noise: { type: "white" },
+                        envelope: { attack: 0.001, decay: 0.4, sustain: 0.1, release: 0.2 },
+                        filter: { frequency: 10000, type: "highpass", Q: 1 }
+                    }).chain(new Tone.Reverb(0.2), Tone.Destination),
+                    
+                    tom_low: () => new Tone.MembraneSynth({
+                        pitchDecay: 0.02, octaves: 4, oscillator: { type: "sine" },
+                        envelope: { attack: 0.005, decay: 0.8, sustain: 0.05, release: 1.2 }
+                    }).chain(new Tone.Filter(150, "lowpass"), Tone.Destination),
+                    
+                    tom_mid: () => new Tone.MembraneSynth({
+                        pitchDecay: 0.02, octaves: 4, oscillator: { type: "sine" },
+                        envelope: { attack: 0.005, decay: 0.6, sustain: 0.05, release: 1.0 }
+                    }).chain(new Tone.Filter(250, "lowpass"), Tone.Destination),
+                    
+                    tom_hi: () => new Tone.MembraneSynth({
+                        pitchDecay: 0.02, octaves: 4, oscillator: { type: "sine" },
+                        envelope: { attack: 0.005, decay: 0.4, sustain: 0.05, release: 0.8 }
+                    }).chain(new Tone.Filter(400, "lowpass"), Tone.Destination),
+                    
+                    rimshot: () => new Tone.NoiseSynth({
+                        noise: { type: "white" },
+                        envelope: { attack: 0.001, decay: 0.02, sustain: 0.0, release: 0.05 },
+                        filter: { frequency: 6000, type: "highpass", Q: 3 }
+                    }).chain(new Tone.Gain(0.7), Tone.Destination),
+                    
+                    cowbell: () => new Tone.MetalSynth({
+                        frequency: 800, envelope: { attack: 0.001, decay: 0.15, sustain: 0.0, release: 0.4 },
+                        harmonicity: 5.8, modulationIndex: 18, resonance: 2000, octaves: 1.2
+                    }).chain(new Tone.Filter(3000, "bandpass"), Tone.Destination),
+                    
+                    ride: () => new Tone.MetalSynth({
+                        frequency: 280, envelope: { attack: 0.001, decay: 1.5, sustain: 0.2, release: 2.0 },
+                        harmonicity: 2.8, modulationIndex: 12, resonance: 3000, octaves: 1.8
+                    }).chain(new Tone.Reverb(0.4), new Tone.Gain(0.6), Tone.Destination),
+                    
+                    crash: () => new Tone.NoiseSynth({
+                        noise: { type: "white" },
+                        envelope: { attack: 0.001, decay: 2.0, sustain: 0.2, release: 4.0 },
+                        filter: { frequency: 8000, type: "highpass", Q: 0.3 }
+                    }).chain(new Tone.Reverb(0.6), new Tone.Gain(0.5), Tone.Destination)
+                };
+                
+                if (synthConfigs[type]) {
+                    this.samples[type] = synthConfigs[type]();
+                    console.log(`✅ Enhanced ${type} synth created as fallback`);
+                }
+            }
+            
+            createTracks() {
+                const tracksContainer = document.getElementById('tracks');
+                
+                this.trackDefinitions.forEach((trackDef, index) => {
+                    const track = this.createTrackElement(trackDef, index);
+                    tracksContainer.appendChild(track);
+                    
+                    this.tracks.push({
+                        name: trackDef.name,
+                        short: trackDef.short,
+                        type: trackDef.type,
+                        volume: 0.7
+                    });
+                });
+            }
+            
+            createTrackElement(trackDef, index) {
+                const trackDiv = document.createElement('div');
+                trackDiv.className = 'track';
+                trackDiv.innerHTML = `
+                    <div class="track-name">${trackDef.name}</div>
+                    <div class="step-grid" id="track-${index}">
+                        ${Array.from({length: 16}, (_, i) => 
+                            `<div class="step" onclick="rhythmMachine.toggleStep(${index}, ${i})">${i + 1}</div>`
+                        ).join('')}
+                    </div>
+                    <div class="track-controls">
+                        <button class="track-btn" onclick="rhythmMachine.randomizeTrack(${index})">RND</button>
+                        <button class="track-btn" onclick="rhythmMachine.clearTrack(${index})">CLR</button>
+                        <div class="volume-control">
+                            <input type="range" min="0" max="1" step="0.1" value="0.7" 
+                                   onchange="rhythmMachine.setTrackVolume(${index}, this.value)"
+                                   oninput="rhythmMachine.updateVolumeDisplay(${index}, this.value)">
+                            <span class="volume-display" id="vol-${index}">70</span>
+                        </div>
+                    </div>
+                `;
+                return trackDiv;
+            }
+            
+            setupEventListeners() {
+                document.getElementById('playBtn').onclick = () => this.play();
+                document.getElementById('stopBtn').onclick = () => this.stop();
+                document.getElementById('clearBtn').onclick = () => this.clearCurrentPattern();
+                document.getElementById('randomBtn').onclick = () => this.randomizeCurrentPattern();
+                document.getElementById('bpmInput').onchange = (e) => this.setBPM(e.target.value);
+                
+                // 編集用パターンセレクター
+                document.querySelectorAll('.pattern-btn').forEach(btn => {
+                    btn.onclick = () => this.selectEditPattern(btn.dataset.pattern);
+                });
+                
+                // シーケンス用パターンセレクター
+                document.querySelectorAll('.sequence-start').forEach(btn => {
+                    btn.onclick = () => this.setSequenceStart(btn.dataset.pattern);
+                });
+                
+                document.querySelectorAll('.sequence-end').forEach(btn => {
+                    btn.onclick = () => this.setSequenceEnd(btn.dataset.pattern);
+                });
+            }
+            
+            hideLoading() {
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('main-content').style.display = 'block';
+            }
+            
+            selectEditPattern(pattern) {
+                this.currentPattern = pattern;
+                document.querySelectorAll('.pattern-btn').forEach(btn => {
+                    btn.classList.remove('active');
+                });
+                document.querySelector(`.pattern-btn[data-pattern="${pattern}"]`).classList.add('active');
+                this.loadPattern(pattern);
+            }
+            
+            setSequenceStart(pattern) {
+                this.sequenceStart = pattern;
+                document.querySelectorAll('.sequence-start').forEach(btn => {
+                    btn.classList.remove('active');
+                });
+                document.querySelector(`.sequence-start[data-pattern="${pattern}"]`).classList.add('active');
+                this.updateSequence();
+            }
+            
+            setSequenceEnd(pattern) {
+                this.sequenceEnd = pattern;
+                document.querySelectorAll('.sequence-end').forEach(btn => {
+                    btn.classList.remove('active');
+                });
+                document.querySelector(`.sequence-end[data-pattern="${pattern}"]`).classList.add('active');
+                this.updateSequence();
+            }
+            
+            updateSequence() {
+                const patterns = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'];
+                const startIndex = patterns.indexOf(this.sequenceStart);
+                const endIndex = patterns.indexOf(this.sequenceEnd);
+                
+                // 開始パターンが終了パターンより後の場合、範囲を調整
+                if (startIndex <= endIndex) {
+                    this.patternsInSequence = patterns.slice(startIndex, endIndex + 1);
+                } else {
+                    // 開始が終了より後の場合（例：G-C）、ラップアラウンド
+                    this.patternsInSequence = [
+                        ...patterns.slice(startIndex),
+                        ...patterns.slice(0, endIndex + 1)
+                    ];
+                }
+                
+                // 現在の再生パターンがシーケンス範囲外の場合、最初にリセット
+                if (!this.isPlaying && !this.patternsInSequence.includes(this.playingPattern)) {
+                    this.playingPattern = this.sequenceStart;
+                    this.currentPatternInSequence = 0;
+                }
+            }
+            
+            loadPattern(pattern) {
+                this.tracks.forEach((_, trackIndex) => {
+                    this.updateTrackDisplay(trackIndex);
+                });
+            }
+            
+            toggleStep(trackIndex, stepIndex) {
+                this.patterns[this.currentPattern][trackIndex][stepIndex] = 
+                    !this.patterns[this.currentPattern][trackIndex][stepIndex];
+                this.updateTrackDisplay(trackIndex);
+            }
+            
+            updateTrackDisplay(trackIndex) {
+                const trackElement = document.getElementById(`track-${trackIndex}`);
+                const steps = trackElement.querySelectorAll('.step');
+                
+                steps.forEach((step, index) => {
+                    if (this.patterns[this.currentPattern][trackIndex][index]) {
+                        step.classList.add('active');
+                    } else {
+                        step.classList.remove('active');
+                    }
+                });
+            }
+            
+            randomizeTrack(trackIndex) {
+                const densities = [0.25, 0.15, 0.1, 0.1, 0.1, 0.2, 0.15, 0.1, 0.3, 0.4, 0.2, 0.1];
+                const density = densities[trackIndex] || 0.2;
+                
+                for (let i = 0; i < 16; i++) {
+                    this.patterns[this.currentPattern][trackIndex][i] = Math.random() < density;
+                }
+                this.updateTrackDisplay(trackIndex);
+            }
+            
+            clearTrack(trackIndex) {
+                this.patterns[this.currentPattern][trackIndex].fill(false);
+                this.updateTrackDisplay(trackIndex);
+            }
+            
+            randomizeCurrentPattern() {
+                this.tracks.forEach((_, index) => {
+                    this.randomizeTrack(index);
+                });
+            }
+            
+            clearCurrentPattern() {
+                this.tracks.forEach((_, index) => {
+                    this.clearTrack(index);
+                });
+            }
+            
+            setTrackVolume(trackIndex, volume) {
+                this.tracks[trackIndex].volume = parseFloat(volume);
+                const trackType = this.tracks[trackIndex].type;
+                if (this.samples[trackType]) {
+                    this.samples[trackType].volume.value = Tone.gainToDb(volume);
+                }
+            }
+            
+            updateVolumeDisplay(trackIndex, volume) {
+                document.getElementById(`vol-${trackIndex}`).textContent = 
+                    Math.round(volume * 100);
+            }
+            
+            setBPM(bpm) {
+                this.bpm = parseInt(bpm);
+                Tone.Transport.bpm.value = this.bpm;
+            }
+            
+            async play() {
+                if (Tone.context.state !== 'running') {
+                    await Tone.start();
+                }
+                
+                if (!this.isPlaying) {
+                    this.isPlaying = true;
+                    this.patternStepCount = 0;
+                    Tone.Transport.start();
+                    this.sequence.start();
+                    document.getElementById('playBtn').textContent = '⏸️ PAUSE';
+                } else {
+                    this.pause();
+                }
+            }
+            
+            pause() {
+                this.isPlaying = false;
+                Tone.Transport.pause();
+                document.getElementById('playBtn').textContent = '▶️ PLAY';
+            }
+            
+            stop() {
+                this.isPlaying = false;
+                Tone.Transport.stop();
+                this.sequence.stop();
+                this.currentStep = 0;
+                this.patternStepCount = 0;
+                this.currentPatternInSequence = 0;
+                this.playingPattern = this.sequenceStart;
+                this.updateUI(0);
+                document.getElementById('playBtn').textContent = '▶️ PLAY';
+            }
+            
+            playStep(step) {
+                this.tracks.forEach((track, trackIndex) => {
+                    if (this.patterns[this.playingPattern][trackIndex][step] && this.samples[track.type]) {
+                        const sample = this.samples[track.type];
+                        
+                        // サンプルプレイヤーの場合
+                        if (sample instanceof Tone.Player) {
+                            if (sample.loaded) {
+                                sample.start();
+                            }
+                        } else {
+                            // シンセサイザーの場合
+                            if (['kick', 'tom_low', 'tom_mid', 'tom_hi'].includes(track.type)) {
+                                const notes = {
+                                    kick: 'C1',
+                                    tom_low: 'F2',
+                                    tom_mid: 'A2',
+                                    tom_hi: 'D3'
+                                };
+                                sample.triggerAttackRelease(notes[track.type], '8n');
+                            } else {
+                                sample.triggerAttackRelease('8n');
+                            }
+                        }
+                    }
+                });
+            }
+            
+            updateUI(step) {
+                document.querySelectorAll('.step.current').forEach(el => {
+                    el.classList.remove('current');
+                });
+                
+                document.querySelectorAll(`.step:nth-child(${step + 1})`).forEach(el => {
+                    el.classList.add('current');
+                });
+                
+                this.currentStep = step;
+                
+                // パターンシーケンスの管理
+                this.patternStepCount++;
+                
+                // 16ステップ完了でパターンを進める
+                if (this.patternStepCount >= 16) {
+                    this.patternStepCount = 0;
+                    this.advancePattern();
+                }
+            }
+            
+            advancePattern() {
+                this.currentPatternInSequence++;
+                
+                // シーケンス終了で最初に戻る
+                if (this.currentPatternInSequence >= this.patternsInSequence.length) {
+                    this.currentPatternInSequence = 0;
+                }
+                
+                this.playingPattern = this.patternsInSequence[this.currentPatternInSequence];
+            }
+        }
+        
+        let rhythmMachine;
+        document.addEventListener('DOMContentLoaded', () => {
+            rhythmMachine = new TR909RhythmMachine();
+        });
+    </script>
+</body>
+</html>
